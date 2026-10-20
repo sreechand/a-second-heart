@@ -3,6 +3,25 @@ Repurposing a Kindle into a clock which tells time entirely through real book qu
 
 Non-destructive, the clock can be exited and the Kindle used as normal at any point.
 
+## Current setup
+
+The current corpus is `quote to image/litclock_annotated_br2.csv` and contains
+11,276 quote records. It is the source for the Kindle images.
+
+`timelit/timelit.sh` is display-only: it reads the Kindle's built-in system
+clock and selects a matching image. It does not set the clock, select a
+timezone, or use a network time server. Set the Kindle's time in its normal
+device settings.
+
+Generated images are intentionally not in GitHub. The current 600 x 800 image
+set is held locally for USB transfer because it is about 460 MB. Before a new
+render, run `python3 tools/validate_corpus.py --expected-records 11276` from
+the repository folder.
+
+The Launchpad `C` shortcut toggles the display. Copy `timelit/` to
+`/mnt/us/timelit/` on the Kindle and place the generated PNG files in
+`/mnt/us/timelit/images/`.
+
 Every time is from a real book quote and the current selection of quotes runs to slightly over 2300+ times for the 1440 minutes of a day. Every quote has the time preserved in it's original written format which means times can vary from 24h clock (1315h) to written format (twenty and seven past three). There are still a number of times still missing and some quotes are vague enough to be used to fill in some gaps.
 
 <p align="center">
@@ -13,7 +32,7 @@ Every time is from a real book quote and the current selection of quotes runs to
 * **Kindle 3 Keyboard** (I think this can be run on multiple models but I haven't explored this yet - I have touch and non--touch to try out)
 * **Computer connection** for use with SSH and transferring files
 
-## Build Overview
+## Historical setup (do not use)
 The overview is fairly simple. Jailbreak the kindle, install launchpad, install USBNetwork, install Python. Use something like USB transfer to transfer all the files to the right place and then SSH into the kindle to set a cronjob.
 
 That's it. Copy some files, then one CronJob + copy a file via SSH. I've tried to provide very detailed steps below - it might look more daunting before you get started.

@@ -1,40 +1,19 @@
 #!/bin/sh
 
-BASEDIR="/mnt/us/timelit"
+BASE="/mnt/us/timelit"
+FLAG="$BASE/clockisticking"
+DISABLE="$BASE/disable-clock"
+EIPS="/usr/sbin/eips"
 
-clockrunning=1
+[ -x "$EIPS" ] || EIPS="eips"
 
-# check if the clock 'app' is not running (by checking if the clockisticking file is there) 
-test -f "$BASEDIR/clockisticking" || clockrunning=0
-
-if [ $clockrunning -eq 0 ]; then
-
-	/etc/init.d/powerd stop
-	/etc/init.d/framework stop
-	
-	eips -c  # clear display
-	#echo "Clock is not ticking. Lets wind it."
-	#eips "Clock is not ticking. Lets wind it."
-
-	# run showMetadata.sh to enable the keystrokes that will show the metadata
-    sh "$BASEDIR/showMetadata.sh"
-
-    touch "$BASEDIR/clockisticking"
-    sh "$BASEDIR/timelit.sh"
-
+if [ -f "$FLAG" ]; then
+    touch "$DISABLE"
+    rm -f "$FLAG"
+    /usr/bin/lipc-set-prop com.lab126.powerd preventScreenSaver 0 >/dev/null 2>&1
+    "$EIPS" -c >/dev/null 2>&1
 else
-
-    rm "$BASEDIR/clockisticking"
-	killall showMetadata.sh waitforkey
-
-	eips -c  # clear display
-	#echo "Clock is ticking. Make it stop."
-	#eips "Clock is ticking. Make it stop."
-
-	# go to home screen
-	# echo "send 102">/proc/keypad
-
-	/etc/init.d/framework start
-	/etc/init.d/powerd start
-
+    rm -f "$DISABLE"
+    touch "$FLAG"
+    /bin/sh "$BASE/timelit.sh"
 fi

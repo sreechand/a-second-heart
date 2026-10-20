@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from sys import argv, exit
-from os import path
+from os import makedirs, path
 import csv
 try:
     from PIL import Image, ImageFont, ImageDraw
@@ -68,10 +68,12 @@ def TurnQuoteIntoImage(index:int, time:str, quote:str, timestring:str,
     try:
         draw_quote(ariandel, (quotestart_x,quotestart_y), quote,
                                 timestring, font_norm, font_high)
-    # warn and discard image if timestring is just not there
+    # Keep the quote when its timestamp marker has unusual punctuation.
+    # The timestamp remains visible but uses the normal font in this case.
     except LookupError:
-        print(f"WARNING: missing timestring at csv line {index+2}, skipping")
-        return
+        print(f"WARNING: missing timestring at csv line {index+2}, drawing without highlight")
+        draw_quote_without_highlight(ariandel, (quotestart_x,quotestart_y),
+                                     quote, font_norm)
 
     # increment a number if time is identical to the last one, so
     # images can't be overwritten
@@ -157,6 +159,18 @@ def draw_quote(drawobj, anchors:tuple, text:str, substr:str,
         x = start_x
 
 
+def draw_quote_without_highlight(drawobj, anchors:tuple, text:str,
+                                 font_norm:ImageFont.truetype):
+    start_x, y = anchors
+    for line in text.splitlines():
+        x = start_x
+        for word in line.split():
+            word += ' '
+            drawobj.text((x, y), word, color_norm, font=font_norm)
+            x += drawobj.textlength(word, font=font_norm)
+        y += font_norm.getbbox("A")[3] + 4
+
+
 def wrap_lines(text:str, font:ImageFont.truetype, line_length:int):
     # wraps lines to maximize the number of words within line_length. note
     # that lines *can* exceed line_length, this is intentional, as text looks
@@ -221,22 +235,18 @@ def create_fnt(name:str, size:int, layout_engine=ImageFont.Layout.BASIC):
 
 
 def main():
-    hardworker = ' /ᐠ - ˕ -マ Ⳋ'
-    with open(csvpath, newline='\n', encoding="utf8") as csvfile:
-        jobs = len(csvfile.readlines()) - 1
-        csvfile.seek(0)
-        if len(argv) > 1:
-            if argv[1].isdigit() and int(argv[1]) < jobs:
-                jobs = int(argv[1])
-        quotereader = csv.DictReader(csvfile, delimiter='|')
-        for i, row in enumerate(quotereader):
-            if i >= jobs:
-                break
-            else:
-                TurnQuoteIntoImage(i, row['time'],row['quote'],
-                row['timestring'], row['author'], row['title'])
-            progressbar = f'{hardworker} working.... {i+1}/{jobs}'
-            print(progressbar, end='\r', flush=True)
+    progress_label = 'rendering'
+    with open(csvpath, newline='', encoding="utf8") as csvfile:
+        rows = list(csv.DictReader(csvfile, delimiter='|'))
+    jobs = len(rows)
+    if len(argv) > 1 and argv[1].isdigit() and int(argv[1]) < jobs:
+        jobs = int(argv[1])
+    makedirs(imgdir, exist_ok=True)
+    for i, row in enumerate(rows[:jobs]):
+        TurnQuoteIntoImage(i, row['time'],row['quote'],
+        row['timestring'], row['author'], row['title'])
+        progressbar = f'{progress_label}: {i+1}/{jobs}'
+        print(progressbar, end='\r', flush=True)
     print("")
 
 

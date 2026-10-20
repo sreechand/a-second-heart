@@ -1,0 +1,8 @@
+# Rendered Kindle screens are generated locally and are intentionally not versioned.
+/build/
+/timelit/images/*.png
+/timelit/images/nometadata/
+
+# Python cache files
+__pycache__/
+*.py[cod]
