@@ -4,7 +4,7 @@
 and an optional record count before rendering:
 
 ```sh
-python3 tools/validate_corpus.py --expected-records 11276
+python3 tools/validate_corpus.py --expected-records 10156
 ```
 
 `build_clean_corpus.py` combines a base corpus with rows expanded for every
@@ -13,7 +13,7 @@ adding the distinct expanded rows:
 
 ```sh
 python3 tools/build_clean_corpus.py base.csv expanded.csv output.csv \
-  --expected-records 11276
+  --expected-records 10156
 ```
 
 Rendered images belong in a local build folder or `timelit/images/`; they are

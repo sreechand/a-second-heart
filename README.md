@@ -6,7 +6,7 @@ Non-destructive, the clock can be exited and the Kindle used as normal at any po
 ## Current setup
 
 The current corpus is `quote to image/litclock_annotated_br2.csv` and contains
-11,276 quote records. It is the source for the Kindle images.
+10,156 quote records. It is the source for the Kindle images.
 
 `timelit/timelit.sh` is display-only: it reads the Kindle's built-in system
 clock and selects a matching image. It does not set the clock, select a
@@ -14,8 +14,8 @@ timezone, or use a network time server. Set the Kindle's time in its normal
 device settings.
 
 Generated images are intentionally not in GitHub. The current 600 x 800 image
-set is held locally for USB transfer because it is about 460 MB. Before a new
-render, run `python3 tools/validate_corpus.py --expected-records 11276` from
+set is held locally for USB transfer because it is about 400 MB. Before a new
+render, run `python3 tools/validate_corpus.py --expected-records 10156` from
 the repository folder.
 
 The Launchpad `C` shortcut toggles the display. Copy `timelit/` to
