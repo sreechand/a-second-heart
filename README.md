@@ -1,107 +1,191 @@
 # A Second Heart
-Repurposing a Kindle into a clock which tells time entirely through real book quotes. A fascinating conversation piece as well as a beautiful and functional clock.
 
-Non-destructive, the clock can be exited and the Kindle used as normal at any point.
+Turn a jailbroken Kindle into a literary clock: every minute is shown as a
+real-book quote excerpt that contains that time.
 
-## Current setup
-
-The current corpus is `quote to image/litclock_annotated_br2.csv` and contains
-10,156 quote records. It is the source for the Kindle images.
-
-`timelit/timelit.sh` is display-only: it reads the Kindle's built-in system
-clock and selects a matching image. It does not set the clock, select a
-timezone, or use a network time server. Set the Kindle's time in its normal
-device settings.
-
-Generated images are intentionally not in GitHub. The current 600 x 800 image
-set is held locally for USB transfer because it is about 400 MB. Before a new
-render, run `python3 tools/validate_corpus.py --expected-records 10156` from
-the repository folder.
-
-The Launchpad `C` shortcut toggles the display. Copy `timelit/` to
-`/mnt/us/timelit/` on the Kindle and place the generated PNG files in
-`/mnt/us/timelit/images/`.
-
-Every time is from a real book quote and the current selection of quotes runs to slightly over 2300+ times for the 1440 minutes of a day. Every quote has the time preserved in it's original written format which means times can vary from 24h clock (1315h) to written format (twenty and seven past three). There are still a number of times still missing and some quotes are vague enough to be used to fill in some gaps.
+The clock is non-destructive. It uses the Kindle screen while it is active,
+but the Kindle can still return to its normal library after the clock is
+stopped.
 
 <p align="center">
 <img src="images/literaryclockrunning.png" height="600">
 </p>
 
-## Materials
-* **Kindle 3 Keyboard** (I think this can be run on multiple models but I haven't explored this yet - I have touch and non--touch to try out)
-* **Computer connection** for use with SSH and transferring files
+## Current, tested setup
 
-## Historical setup (do not use)
-The overview is fairly simple. Jailbreak the kindle, install launchpad, install USBNetwork, install Python. Use something like USB transfer to transfer all the files to the right place and then SSH into the kindle to set a cronjob.
+This repository currently documents a **Kindle 4 non-touch** with the physical
+five-way controller. It has been set up with:
 
-That's it. Copy some files, then one CronJob + copy a file via SSH. I've tried to provide very detailed steps below - it might look more daunting before you get started.
+- a jailbreak;
+- the MobileRead Kindlet Developer Certificates (MKK);
+- KUAL, the Kindle Unified Application Launcher;
+- USBNetwork, used for direct maintenance from a Mac; and
+- the Literary Clock files in `/mnt/us/timelit/`.
 
-The SSH is the hardest part by far but it's only needed for a small part
+The current corpus is
+[`quote to image/litclock_annotated_br2.csv`](quote%20to%20image/litclock_annotated_br2.csv).
+It contains **10,156** credited quote records and covers all **1,440** minutes
+of the day. The generated images are deliberately not stored in Git because
+the 600 x 800 set is about 400 MB.
 
-* **WARNING** None of this is what the kindle is designed to do and it's not hard to get it wrong and brick the Kindle. Do not proceed unless you are comfortable with this risk.
+## How the clock works
 
-## **Step 1 - Make Some Images**
-* Run the quote_to_image python script to generate your images in the 'images' folder. The script is designed to run in the same folder as the quotes csv file. There are various things you can do at this point - change fonts, link the files in different ways, etc.
-* If you prefer to generate images without the author and title in them, you can change the line that says "include_metadata" to "False". These will be saved to /images/nometadata/ by default.
-* You'll need to have Python and the Pillow module installed - `pip3 install pillow`. Installing Python is OS dependent but otherwise very straightfoward.
-* The end result is you should have a folder containing 2,300+ images. This folder can be copied into the timelit folder so they run like .../timelit/images/.
-* When it comes to copy the timelit folder across this can be done in one step, scripts and images all together.
-* Generating the images should take less than 5 minutes. If this is a problem for you, I have included a zipped folder with all the metadata images also.
-* There's also an older, PHP version of this script (requires Imagick and gd), which produces similar results. It's a bit less accurate and a chore to setup, so use at your own risk.
+1. The corpus is rendered into files named `quote_HHMM_N.png`, such as
+   `quote_1206_2.png`.
+2. `timelit/timelit.sh` reads the Kindle's built-in system time. It does not
+   change the time, timezone, or use the network.
+3. When `clockisticking` exists, a once-a-minute scheduled task runs the
+   script. The script picks a random image for the current minute and displays
+   it with the Kindle screen tool.
+4. `disable-clock` stops the clock and allows the normal screen saver again.
 
-## **Step 2** - Jailbreak the kindle and install appropriate software - see the sources folder for these files
-* **Optional but useful** Update the kindle amazon firmware to the newest, this helps with time and date setting in the background. Firmwares available here pay attention to your serial number https://www.amazon.com/gp/help/customer/display.html?nodeId=GX3VVAQS4DYDE5KE
-* **Jailbreak the kindle** Connect the kindle to USB, extract and copy over the jailbreak install file (directly to the root of the visible USB storage section, not into any folders) for the correct kindle model. Disconnect from USB, Menu -> Settings -> Menu -> Update. When you reconnect to USB it will now have a linkjail folder. Find your code for the jailbreak files herr: https://wiki.mobileread.com/wiki/Kindle_Serial_Numbers
-* **Install Launchapd** Same as before, copy over the appropriate launchpad files, update, restart. It will now have a launchpad folder
-* **Install usbNetwork** Same as before, copy over the appropriate usbnetwork files, update, restart. It will now have a usbnet folder.
-* **Install Python** Same as before, copy over the appropriate python files, update, restart. It will now have a python folder.
+The small, plain numeric time screen is a fallback. It means the script ran
+but could not find an image for that minute. With the current corpus that
+should not happen: every minute has at least one image. A fallback that stays
+on screen for a long time usually means the once-a-minute scheduled task has
+stopped, not that the quote corpus is missing.
 
+## Repository layout
 
-## **Step 3** - Install the scripts for this project
-* Connect the Kindle to USB and you will see the storage on your computer available. This is /mnt/us/ in the linux filesystem so it's easier to copy and paste here over USB than trying to use rsync or SSH or whatever.
-* Copy and paste over the timelit folder into /mnt/us so there now exists /mnt/us/timelit/ which contains the scripts, plus the images in their appropriate place /mnt/us/timelit/images/nometadata
-* In the timelit -> conf folder rename the mac-address-here.conf file to your mac address lower case with hyphen replacing dots
-* In the timelit -> conf folder, edit the mac-address-here.conf file as required to show time in the correct timezone. Ex: GMT0BST -> AST4ADT. Timezone formats can be referenced from here: https://mm.icann.org/pipermail/tz/2001-April/011541.html
-* Copy and paste over the utils folder into /mnt/us/ so there now exists /mnt/us/utils which contains other utility scripts
-* Copy the startClock.ini file to the existing /mnt/us/launchpad folder (this provides the key combo to enable SSH as well as the clock)
-* Activate SSH over wifi by editing 'config' file in /mnt/us/usbnet/etc to turn 'allow ssh over wifi' to true. You can also update the kindle's local IP address expectations here, although I'm not sure if this is necessary for SSH over WiFi.
-* All of the above can be done over USB in windows (and linux) as the 'external' storage visible when you plug in just like a USB stick is /mnt/us/
-* Restart the kindle (settings -> menu -> settings -> restart). This is needed to get the key combinations activated in launchpad. A soft reboot after an update won't do the same as a full restart - you need a full restart to get this implemented.
-* Now if you select Shift, then N on the keypad (press shift, let go, press n) the message 'success' should pop up and networking is turned on to allow SSH connections. If this doesn't work then the tedious way is to use the kindle search function and search for ';debugOn' then '~usbNetwork' then ';debugOff' (without quotes but with tilde/semicolon) and this will turn SSH access on.
-* SSH into your kindle - I prefer PuTTY (get the IP of the Kindle from your router (default will try to be 192.168.2.2, see /mnt/us/usbnet/etc/config), user is root, password can be found using the serial number here: https://www.sven.de/kindle/?# or use the python script included in sources here - may need to try all 4 to get one which works)
-* Mount the root storage as read-write, then edit the crontab to add a cronjob, something like the below instruction set
+| Path | Purpose |
+| --- | --- |
+| `quote to image/litclock_annotated_br2.csv` | The editable source corpus. |
+| `quote to image/quote_to_image.py` | The original Python renderer. |
+| `tools/validate_corpus.py` | Checks the corpus format, times, count, and credits. |
+| `timelit/` | Files copied to `/mnt/us/timelit/` on the Kindle. |
+| `timelit/timelit.sh` | Shows the quote image for the current minute. |
+| `timelit/startstopClock.sh` | Starts or stops the display mode. |
+| `launchpad/startClock.ini` | Legacy Launchpad shortcut configuration. |
+| `sources/` | Archived Kindle installation files and references. |
 
-```
-mntroot rw
-nano /etc/crontab/root
-(add the below cronjob to the top of the crontab)
-* * * * * /bin/sh /mnt/us/timelit/timelit.sh
-ctrl+x then yes to save
+## Build a corpus
 
-(then the following functions to add the cleanup clockisticking file function)
-cp /mnt/us/utils/clean-clock.sh /etc/init.d/clean-clock
-cd /etc/rcS.d
-ln -s ../init.d/clean-clock S77clean-clock
-mntroot ro
-reboot
+The corpus has five pipe-separated columns:
+
+```text
+time|timestring|quote|title|author
 ```
 
-* This should be total extent of SSH/terminal needed - adding timelit.sh to a one minute cronjob and copy the clean-clock file to init.d
-* Once the kindle has rebooted and given a minute to be fully running, shift (and release) and press C should start the clock.
-* This project disables the metadata function so no buttons at all should affect the clock running. If the battery runs out, charging it will put it right back in clock mode.
-* Shift (and release) and C while the clock is running will reboot the kindle out of clock mode and back to normal mode - perfectly usable as a normal kindle with books all kept where they are - this whole project is non-destructive to your Kindle.
+`time` must be a 24-hour `HH:MM` value. `timestring` is the exact form shown
+inside the source quote. The quote text, title, and author are all required.
 
-## Uninstall
-* All of the source files also have 'uninstall' variants to remove them from the Kindle if you wished to take it right back to the start.
-* Delete all the folders and files you created yourself (but not the ones created by the updates like usbnet, python etc)
-* Copy across the uninstall variants of each update one at a time and apply as an update, python, usbnet, launchapd, jailbreak.
+Before rendering, validate the corpus from the repository folder:
+
+```sh
+python3 tools/validate_corpus.py --expected-records 10156 --require-credits
+```
+
+The source file is CSV in the sense that it uses rows and fields, but its
+separator is `|` rather than a comma. Quotes containing `|`, quotation marks,
+or line breaks must be saved with normal CSV quoting so standard CSV readers
+can parse them correctly.
+
+For long quotes, shorten only by removing complete sentences. Do not rewrite
+words or punctuation, and keep the sentence containing the visible timestamp.
+
+## Render the images
+
+The renderer expects its CSV and fonts in the same `quote to image` folder.
+
+```sh
+cd "quote to image"
+python3 quote_to_image.py
+```
+
+Keep rendered images outside Git. Before replacing the images on a Kindle,
+count the output and make a backup of its existing `timelit/images` folder.
+The current checked corpus renders to 10,156 PNG files.
+
+## Install or refresh the Kindle corpus
+
+The simplest reliable transfer is the mounted-drive method.
+
+1. Connect the Kindle by USB and wait for it to appear as a drive on the Mac.
+2. Back up the existing generated images before deleting them. Do not remove
+   `timelit.sh`, `startstopClock.sh`, or the rest of `/mnt/us/timelit/`.
+3. Delete old `quote_*.png` files from `/mnt/us/timelit/images/`. Also delete
+   any incomplete temporary staging folder such as `images.new`.
+4. Copy the entire fresh image set into `/mnt/us/timelit/images/`.
+5. Confirm the Kindle contains the expected number of PNG files before
+   ejecting it.
+6. Safely eject the Kindle. Do not unplug it while files are still copying.
+
+There must be enough free storage for the new image set. Keeping both a large
+archive and the unpacked images on this Kindle can leave too little space, so
+prefer copying the images directly over USB.
+
+## KUAL and USBNetwork
+
+KUAL is used on this Kindle to turn USBNetwork on and off. With USBNetwork
+enabled, the Mac can connect directly to the Kindle at `192.168.15.244` over
+the USB cable. This is useful for checking logs, running a single display
+update, or repairing the built-in time.
+
+If KUAL says that the device is not authorized as a test Kindle, or shows a
+generic error when opened, the usual repair is to install the matching MKK
+certificate update for the Kindle model and restart. KUAL should then show its
+USBNetwork entry again.
+
+Turn USBNetwork off in KUAL before using the Kindle as a normal USB drive. A
+Kindle cannot reliably be a mounted USB drive and a USBNetwork device at the
+same time.
+
+## Starting and stopping the display
+
+`clockisticking` starts the display mode and `disable-clock` stops it.
+`timelit/startstopClock.sh` toggles those files and immediately draws one
+image when starting.
+
+The older Launchpad `C` shortcut in this repository applies to Kindle models
+with a physical keyboard. A Kindle 4 non-touch does not have that key, so use
+KUAL or a USBNetwork maintenance connection instead.
+
+The device still needs a once-a-minute scheduled task that calls:
+
+```sh
+/bin/sh /mnt/us/timelit/timelit.sh
+```
+
+If the screen shows one quote and then never changes, check that scheduled
+task first. If the screen shows a tiny numeric time, check the script log at
+`/mnt/us/timelit/timelit.log` and confirm the images are in
+`/mnt/us/timelit/images/`.
+
+## Repair the Kindle's built-in time
+
+This Kindle has no normal settings screen for changing the time. When the
+clock drifts, or resets after a restart, connect through USBNetwork and set
+both the running clock and the saved hardware clock in the same session.
+
+The successful repair used the Mac's current local time in this form:
+
+```sh
+date MMDDhhmmYYYY.ss
+hwclock -w
+```
+
+For example, `date 102114282026.26` sets 21 October 2026, 14:28:26. The second
+command saves that value so it survives a restart. Always read back both
+values with `date` and `hwclock -r` and compare them with the Mac before
+disconnecting.
+
+Do not put time-setting commands inside `timelit.sh`. That script must remain
+display-only; otherwise the Literary Clock can make the Kindle's system time
+jump unexpectedly.
+
+## Safety notes
+
+- Kindle modifications can leave the device unable to boot if the wrong
+  update is installed. Use packages that match the Kindle model.
+- Keep a copy of the corpus, rendered images, and `/mnt/us/timelit/` before a
+  factory reset or major firmware work.
+- Do not edit the root filesystem unless a specific maintenance task requires
+  it. The clock images and scripts live in the USB storage area at `/mnt/us`.
+- Some source quotes include adult language and are intentionally unedited.
 
 ## Credits
-* The original project instructables by tjaap - https://www.instructables.com/Literary-Clock-Made-From-E-reader/
-* Updated and modified scripts for running it by knobunc - https://github.com/knobunc/kindle-clock
-* Hugely expanded list of quotes from JohannesNE - https://github.com/JohannesNE/literature-clock
-* Original project ideas and crowdsourced quotes - the Guardian - http://litclock.mohawkhq.com/
 
-## NSFW Warning
-A number of the literary quotes contain NSFW language. I have little to no interest in filtering them out and they remain here unredacted. If you wanted to you could do a ctrl+f search and replace for common profanity through the quotes.
+- Original project: [Literary Clock Made From E-reader](https://www.instructables.com/Literary-Clock-Made-From-E-reader/)
+- Earlier Kindle clock scripts: [knobunc/kindle-clock](https://github.com/knobunc/kindle-clock)
+- Expanded quote source: [JohannesNE/literature-clock](https://github.com/JohannesNE/literature-clock)
+- Original crowdsourced project: [The Guardian literary clock](http://litclock.mohawkhq.com/)
